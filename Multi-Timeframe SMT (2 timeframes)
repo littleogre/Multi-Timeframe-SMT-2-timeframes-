@@ -10,6 +10,8 @@
 //              - Added real-time status table for LTF signals.
 //              - Moved table toggle to general settings.
 //              - Increased 'Pivot A' label offset and updated its text.
+//              - Matched 'Pivot A' label transparency to SMT labels.
+//              - Added timeframe to 'Pivot A' label.
 // -----------------------------------------------------------------------------
 
 import TradingView/ta/6 as ta
@@ -27,7 +29,6 @@ enableTimeFilter2 = input.bool(false, "Enable Session Filter 2", group = GRP_TIM
 timeSession2 = input.session("1300-1700", "Trading Session 2", group = GRP_TIME_FILTER, tooltip="Define the time window for plotting SMTs. Format is HHMM-HHMM.")
 enableTimeFilter3 = input.bool(false, "Enable Session Filter 3", group = GRP_TIME_FILTER, tooltip="If checked, the indicator will only plot SMT signals within this specified trading session.")
 timeSession3 = input.session("0000-0700", "Trading Session 3", group = GRP_TIME_FILTER, tooltip="Define the time window for plotting SMTs. Format is HHMM-HHMM.")
-// MODIFICATION: Moved table toggle to general settings
 bool showStatusTable = input.bool(true, "Show Status Table", group = GRP_TIME_FILTER, tooltip="Shows a table with the status of LTF SMT signals and invalidations.")
 
 
@@ -204,14 +205,13 @@ cleanupSmtDrawings1() =>
 if isSmtLogicActive_SMT1
     bool isWithinTimeSession = isWithinAnySession()
     string shortAssetName = getTicker(masterComparisonAsset)
-    // MODIFICATION: Added short name for main asset
     string shortMainAsset = getTicker(syminfo.ticker)
     float atr_SMT1 = ta.atr(14)
-    // MODIFICATION: Doubled 'A' label offset
     float y_offset_SMT1 = atr_SMT1 * 0.2
     
-    // MODIFICATION: Define 'A' label text
-    string pivotAText_SMT1 = "Simultaneous Pivot\n" + shortMainAsset + " vs " + shortAssetName
+    // MODIFICATION: Added timeframe string to label text
+    string htf_string_SMT1 = formatTimeframe(timeframeInput_SMT1)
+    string pivotAText_SMT1 = "Simultaneous Pivot (" + htf_string_SMT1 + ")\n" + shortMainAsset + " vs " + shortAssetName
 
     if is_new_htf_bar_SMT1
         int pivot_idx = array.size(smt1_history_highs) - 1 - rightBars_SMT1
@@ -242,8 +242,7 @@ if isSmtLogicActive_SMT1
                 line.delete(intraDayHighWatchline_SMT1), intraDayHighWatchline_SMT1 := na, label.delete(intraDayHighLabel_SMT1), intraDayHighLabel_SMT1 := na, intraDayWatchlineHighPrice_SMT1 := na
                 label.delete(pivotA_HighLabel_SMT1), label.delete(visualPivotA_HighLabel_SMT1)
                 pivotA_HighLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotHigh, str.tostring(compHtfPivotHigh), xloc = xloc.bar_time, style=label.style_none, textcolor=color.new(color.white, 100))
-                // MODIFICATION: Updated 'A' label text, tooltip, and alignment
-                visualPivotA_HighLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotHigh + y_offset_SMT1, pivotAText_SMT1, xloc=xloc.bar_time, style=label.style_label_down, color=color.new(phColor_SMT1, 25), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot High", textalign=text.align_left)
+                visualPivotA_HighLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotHigh + y_offset_SMT1, pivotAText_SMT1, xloc=xloc.bar_time, style=label.style_label_down, color=color.new(phColor_SMT1, 75), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot High", textalign=text.align_left)
                 ltfMainAssetInvalidatedHigh_SMT1 := false, ltfCompAssetInvalidatedHigh_SMT1 := false
             bool is_main_pivot_low = checkForPivot(smt1_history_lows, pivot_idx, leftBars_SMT1, rightBars_SMT1, false)
             bool is_comp_pivot_low = checkForPivot(smt1_comp_history_lows, pivot_idx, leftBars_SMT1, rightBars_SMT1, false)
@@ -271,8 +270,7 @@ if isSmtLogicActive_SMT1
                 line.delete(intraDayLowWatchline_SMT1), intraDayLowWatchline_SMT1 := na, label.delete(intraDayLowLabel_SMT1), intraDayLowLabel_SMT1 := na, intraDayWatchlineLowPrice_SMT1 := na
                 label.delete(pivotA_LowLabel_SMT1), label.delete(visualPivotA_LowLabel_SMT1)
                 pivotA_LowLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotLow, str.tostring(compHtfPivotLow), xloc = xloc.bar_time, style=label.style_none, textcolor=color.new(color.white, 100))
-                // MODIFICATION: Updated 'A' label text, tooltip, and alignment
-                visualPivotA_LowLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotLow - y_offset_SMT1, pivotAText_SMT1, xloc=xloc.bar_time, style=label.style_label_up, color=color.new(plColor_SMT1, 25), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot Low", textalign=text.align_left)
+                visualPivotA_LowLabel_SMT1 := label.new(smt_main_pivot_time, mainHtfPivotLow - y_offset_SMT1, pivotAText_SMT1, xloc=xloc.bar_time, style=label.style_label_up, color=color.new(plColor_SMT1, 75), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot Low", textalign=text.align_left)
                 ltfMainAssetInvalidatedLow_SMT1 := false, ltfCompAssetInvalidatedLow_SMT1 := false
     
     // =================================== START: CORRECTED SMT1 LTF LOGIC ===================================
@@ -353,10 +351,10 @@ if isSmtLogicActive_SMT1
     // =================================== END: CORRECTED SMT1 LTF LOGIC ===================================
     
     if not na(visualPivotA_HighLabel_SMT1)
-        label.set_color(visualPivotA_HighLabel_SMT1, showPivotALabel_SMT1 ? color.new(phColor_SMT1, 25) : color.new(color.white, 100))
+        label.set_color(visualPivotA_HighLabel_SMT1, showPivotALabel_SMT1 ? color.new(phColor_SMT1, 75) : color.new(color.white, 100))
         label.set_textcolor(visualPivotA_HighLabel_SMT1, showPivotALabel_SMT1 ? color.white : color.new(color.white, 100))
     if not na(visualPivotA_LowLabel_SMT1)
-        label.set_color(visualPivotA_LowLabel_SMT1, showPivotALabel_SMT1 ? color.new(plColor_SMT1, 25) : color.new(color.white, 100))
+        label.set_color(visualPivotA_LowLabel_SMT1, showPivotALabel_SMT1 ? color.new(plColor_SMT1, 75) : color.new(color.white, 100))
         label.set_textcolor(visualPivotA_LowLabel_SMT1, showPivotALabel_SMT1 ? color.white : color.new(color.white, 100))
 else
     cleanupSmtDrawings1()
@@ -439,14 +437,13 @@ cleanupSmtDrawings2() =>
 if isSmtLogicActive_SMT2
     bool isWithinTimeSession = isWithinAnySession()
     string shortAssetName = getTicker(masterComparisonAsset)
-    // MODIFICATION: Added short name for main asset
     string shortMainAsset = getTicker(syminfo.ticker)
     float atr_SMT2 = ta.atr(14)
-    // MODIFICATION: Doubled 'A' label offset
     float y_offset_SMT2 = atr_SMT2 * 0.2
     
-    // MODIFICATION: Define 'A' label text
-    string pivotAText_SMT2 = "Simultaneous Pivot\n" + shortMainAsset + " vs " + shortAssetName
+    // MODIFICATION: Added timeframe string to label text
+    string htf_string_SMT2 = formatTimeframe(timeframeInput_SMT2)
+    string pivotAText_SMT2 = "Simultaneous Pivot (" + htf_string_SMT2 + ")\n" + shortMainAsset + " vs " + shortAssetName
 
     if is_new_htf_bar_SMT2
         int pivot_idx = array.size(smt2_history_highs) - 1 - rightBars_SMT2
@@ -477,8 +474,7 @@ if isSmtLogicActive_SMT2
                 line.delete(intraDayHighWatchline_SMT2), intraDayHighWatchline_SMT2 := na, label.delete(intraDayHighLabel_SMT2), intraDayHighLabel_SMT2 := na, intraDayWatchlineHighPrice_SMT2 := na
                 label.delete(pivotA_HighLabel_SMT2), label.delete(visualPivotA_HighLabel_SMT2)
                 pivotA_HighLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotHigh, str.tostring(compHtfPivotHigh), xloc = xloc.bar_time, style=label.style_none, textcolor=color.new(color.white, 100))
-                // MODIFICATION: Updated 'A' label text, tooltip, and alignment
-                visualPivotA_HighLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotHigh + y_offset_SMT2, pivotAText_SMT2, xloc=xloc.bar_time, style=label.style_label_down, color=color.new(phColor_SMT2, 25), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot High", textalign=text.align_left)
+                visualPivotA_HighLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotHigh + y_offset_SMT2, pivotAText_SMT2, xloc=xloc.bar_time, style=label.style_label_down, color=color.new(phColor_SMT2, 75), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot High", textalign=text.align_left)
                 ltfMainAssetInvalidatedHigh_SMT2 := false, ltfCompAssetInvalidatedHigh_SMT2 := false
             bool is_main_pivot_low = checkForPivot(smt2_history_lows, pivot_idx, leftBars_SMT2, rightBars_SMT2, false)
             bool is_comp_pivot_low = checkForPivot(smt2_comp_history_lows, pivot_idx, leftBars_SMT2, rightBars_SMT2, false)
@@ -506,8 +502,7 @@ if isSmtLogicActive_SMT2
                 line.delete(intraDayLowWatchline_SMT2), intraDayLowWatchline_SMT2 := na, label.delete(intraDayLowLabel_SMT2), intraDayLowLabel_SMT2 := na, intraDayWatchlineLowPrice_SMT2 := na
                 label.delete(pivotA_LowLabel_SMT2), label.delete(visualPivotA_LowLabel_SMT2)
                 pivotA_LowLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotLow, str.tostring(compHtfPivotLow), xloc = xloc.bar_time, style=label.style_none, textcolor=color.new(color.white, 100))
-                // MODIFICATION: Updated 'A' label text, tooltip, and alignment
-                visualPivotA_LowLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotLow - y_offset_SMT2, pivotAText_SMT2, xloc=xloc.bar_time, style=label.style_label_up, color=color.new(plColor_SMT2, 25), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot Low", textalign=text.align_left)
+                visualPivotA_LowLabel_SMT2 := label.new(smt_main_pivot_time, mainHtfPivotLow - y_offset_SMT2, pivotAText_SMT2, xloc=xloc.bar_time, style=label.style_label_up, color=color.new(plColor_SMT2, 75), textcolor=color.white, size=size.small, tooltip="Simultaneous Pivot Low", textalign=text.align_left)
                 ltfMainAssetInvalidatedLow_SMT2 := false, ltfCompAssetInvalidatedLow_SMT2 := false
     
     // =================================== START: CORRECTED SMT2 LTF LOGIC ===================================
@@ -588,10 +583,10 @@ if isSmtLogicActive_SMT2
     // =================================== END: CORRECTED SMT2 LTF LOGIC ===================================
         
     if not na(visualPivotA_HighLabel_SMT2)
-        label.set_color(visualPivotA_HighLabel_SMT2, showPivotALabel_SMT2 ? color.new(phColor_SMT2, 25) : color.new(color.white, 100))
+        label.set_color(visualPivotA_HighLabel_SMT2, showPivotALabel_SMT2 ? color.new(phColor_SMT2, 75) : color.new(color.white, 100))
         label.set_textcolor(visualPivotA_HighLabel_SMT2, showPivotALabel_SMT2 ? color.white : color.new(color.white, 100))
     if not na(visualPivotA_LowLabel_SMT2)
-        label.set_color(visualPivotA_LowLabel_SMT2, showPivotALabel_SMT2 ? color.new(plColor_SMT2, 25) : color.new(color.white, 100))
+        label.set_color(visualPivotA_LowLabel_SMT2, showPivotALabel_SMT2 ? color.new(plColor_SMT2, 75) : color.new(color.white, 100))
         label.set_textcolor(visualPivotA_LowLabel_SMT2, showPivotALabel_SMT2 ? color.white : color.new(color.white, 100))
 else
     cleanupSmtDrawings2()
